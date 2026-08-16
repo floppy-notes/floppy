@@ -48,13 +48,10 @@ func Parse(raw []byte) (Item, error) {
 func findCloseDelim(rest []byte) (int, int, bool) {
 	offset := 0
 
-	for _, line := range bytes.Split(rest, []byte("\n")) {
+	for line := range bytes.SplitSeq(rest, []byte("\n")) {
 		if string(bytes.TrimSpace(line)) == delim {
 			yamlEnd := offset
-			bodyStart := offset + len(line) + 1
-			if bodyStart > len(rest) {
-				bodyStart = len(rest)
-			}
+			bodyStart := min(offset+len(line)+1, len(rest))
 			return yamlEnd, bodyStart, true
 		}
 
