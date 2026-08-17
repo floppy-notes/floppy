@@ -14,7 +14,6 @@ var schemaStatements = []string{
 		due       TEXT,
 		status    TEXT,
 		remind_at TEXT,
-		tags      TEXT,
 		path      TEXT NOT NULL
 	)
 	`,
