@@ -3,19 +3,35 @@ package main
 import (
 	"fmt"
 
-	"github.com/floppy-notes/floppy/internal/vault"
+	"github.com/floppy-notes/floppy/internal/database"
+	"github.com/floppy-notes/floppy/internal/index"
 )
 
+const VAULT_ROOT_DIR = "testdata"
+
 func main() {
-	fmt.Println(vault.Walk("testdata"))
 
-	// db, err := database.Open(
-	// 	database.WithPath("testdata"),
-	// )
+	db, err := database.Open(
+		database.WithPath(VAULT_ROOT_DIR),
+	)
 
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	err = index.Rebuild(db, VAULT_ROOT_DIR)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for _, t := range []string{"items", "items_fts", "tags", "edges"} {
+		var n int
+		db.Conn.QueryRow("SELECT COUNT(*) FROM " + t).Scan(&n)
+		fmt.Printf("%s: %d\n", t, n)
+	}
 
 	// db.Conn.Ping()
 

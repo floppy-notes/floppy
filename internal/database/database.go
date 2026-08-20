@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/floppy-notes/floppy/internal/item"
 	_ "modernc.org/sqlite"
 )
 
@@ -46,4 +47,48 @@ func Open(options ...Option) (*Database, error) {
 		config: *dbc,
 		Conn:   db,
 	}, nil
+}
+
+func (db *Database) RunInTransaction(fn func(tx *sql.Tx) error) error {
+	tx, err := db.Conn.Begin()
+
+	if err != nil {
+		return fmt.Errorf("beginning transaction: %w", err)
+	}
+
+	defer tx.Rollback()
+
+	if err := fn(tx); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (db *Database) clearAll() error {
+	tables := []string{"items", "items_fts", "tags", "edges"}
+	for _, t := range tables {
+		if _, err := db.Conn.Exec("DELETE FROM " + t); err != nil {
+			return fmt.Errorf("clearing %s: %w", t, err)
+		}
+	}
+	return nil
+}
+
+func (d *Database) Rebuild(items []item.Item) error {
+	return d.RunInTransaction(func(tx *sql.Tx) error {
+		if err := d.clearAll(); err != nil {
+			return err
+		}
+		for _, it := range items {
+			if err := indexOne(tx, it); err != nil {
+				return fmt.Errorf("indexing %s: %w", it.Front.ID, err)
+			}
+		}
+		return nil
+	})
 }
