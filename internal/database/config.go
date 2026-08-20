@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	DEFAULT_DB_FOLDER = ".floppy"
+	DefaultDbFolder = ".floppy"
 )
 
 type DatabaseConfig struct {
@@ -19,7 +19,7 @@ func (dbc *DatabaseConfig) setDefaults() error {
 	if err != nil {
 		return err
 	}
-	dbc.Path = filepath.Join(homeDir, DEFAULT_DB_FOLDER)
+	dbc.Path = filepath.Join(homeDir, DefaultDbFolder)
 
 	return nil
 }

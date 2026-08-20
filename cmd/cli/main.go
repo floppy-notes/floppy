@@ -7,12 +7,12 @@ import (
 	"github.com/floppy-notes/floppy/internal/index"
 )
 
-const VAULT_ROOT_DIR = "testdata"
+const vaultRootDir = "testdata"
 
 func main() {
 
 	db, err := database.Open(
-		database.WithPath(VAULT_ROOT_DIR),
+		database.WithPath(vaultRootDir),
 	)
 
 	if err != nil {
@@ -20,7 +20,7 @@ func main() {
 		return
 	}
 
-	err = index.Rebuild(db, VAULT_ROOT_DIR)
+	err = index.Rebuild(db, vaultRootDir)
 
 	if err != nil {
 		fmt.Println(err)

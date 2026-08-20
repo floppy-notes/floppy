@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	DB_NAME = "floppy.db"
+	DbName = "floppy.db"
 )
 
 type Database struct {
@@ -26,7 +26,7 @@ func Open(options ...Option) (*Database, error) {
 		return nil, fmt.Errorf("setting up dbc: %w", err)
 	}
 
-	dataSourceName := filepath.Join(dbc.Path, DB_NAME)
+	dataSourceName := filepath.Join(dbc.Path, DbName)
 
 	if err := os.MkdirAll(dbc.Path, 0o755); err != nil {
 		return nil, fmt.Errorf("creating db folder: %w", err)
@@ -69,10 +69,10 @@ func (db *Database) RunInTransaction(fn func(tx *sql.Tx) error) error {
 	return nil
 }
 
-func (db *Database) clearAll() error {
+func (db *Database) clearAll(tx *sql.Tx) error {
 	tables := []string{"items", "items_fts", "tags", "edges"}
 	for _, t := range tables {
-		if _, err := db.Conn.Exec("DELETE FROM " + t); err != nil {
+		if _, err := tx.Exec("DELETE FROM " + t); err != nil {
 			return fmt.Errorf("clearing %s: %w", t, err)
 		}
 	}
@@ -81,7 +81,7 @@ func (db *Database) clearAll() error {
 
 func (d *Database) Rebuild(items []item.Item) error {
 	return d.RunInTransaction(func(tx *sql.Tx) error {
-		if err := d.clearAll(); err != nil {
+		if err := d.clearAll(tx); err != nil {
 			return err
 		}
 		for _, it := range items {
