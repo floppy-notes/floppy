@@ -3,10 +3,8 @@ package database
 import (
 	"os"
 	"path/filepath"
-)
 
-const (
-	DefaultDbFolder = ".floppy"
+	"github.com/floppy-notes/floppy/internal/domain"
 )
 
 type DatabaseConfig struct {
@@ -19,7 +17,7 @@ func (dbc *DatabaseConfig) setDefaults() error {
 	if err != nil {
 		return err
 	}
-	dbc.Path = filepath.Join(homeDir, DefaultDbFolder)
+	dbc.Path = filepath.Join(homeDir, domain.DefaultDbFolder)
 
 	return nil
 }

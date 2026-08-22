@@ -6,12 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/floppy-notes/floppy/internal/domain"
 	"github.com/floppy-notes/floppy/internal/item"
 	_ "modernc.org/sqlite"
-)
-
-const (
-	DbName = "floppy.db"
 )
 
 type Database struct {
@@ -26,7 +23,7 @@ func Open(options ...Option) (*Database, error) {
 		return nil, fmt.Errorf("setting up dbc: %w", err)
 	}
 
-	dataSourceName := filepath.Join(dbc.Path, DbName)
+	dataSourceName := filepath.Join(dbc.Path, domain.DbName)
 
 	if err := os.MkdirAll(dbc.Path, 0o755); err != nil {
 		return nil, fmt.Errorf("creating db folder: %w", err)

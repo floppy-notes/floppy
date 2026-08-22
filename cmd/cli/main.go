@@ -1,37 +1,40 @@
 package main
 
 import (
-	"fmt"
+	"os"
 
-	"github.com/floppy-notes/floppy/internal/database"
-	"github.com/floppy-notes/floppy/internal/index"
+	"github.com/floppy-notes/floppy/internal/cli"
 )
 
 const vaultRootDir = "testdata"
 
 func main() {
 
-	db, err := database.Open(
-		database.WithPath(vaultRootDir),
-	)
-
-	if err != nil {
-		fmt.Println(err)
-		return
+	if err := cli.Execute(); err != nil {
+		os.Exit(1)
 	}
 
-	err = index.Rebuild(db, vaultRootDir)
+	// db, err := database.Open(
+	// 	database.WithPath(vaultRootDir),
+	// )
 
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
 
-	for _, t := range []string{"items", "items_fts", "tags", "edges"} {
-		var n int
-		db.Conn.QueryRow("SELECT COUNT(*) FROM " + t).Scan(&n)
-		fmt.Printf("%s: %d\n", t, n)
-	}
+	// err = index.Rebuild(db, vaultRootDir)
+
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+
+	// for _, t := range []string{"items", "items_fts", "tags", "edges"} {
+	// 	var n int
+	// 	db.Conn.QueryRow("SELECT COUNT(*) FROM " + t).Scan(&n)
+	// 	fmt.Printf("%s: %d\n", t, n)
+	// }
 
 	// db.Conn.Ping()
 
