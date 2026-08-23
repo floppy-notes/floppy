@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/floppy-notes/floppy/internal/domain"
 	"github.com/spf13/cobra"
 )
 
@@ -34,5 +35,5 @@ func defaultVaultPath() string {
 		return v
 	}
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, "/floppy")
+	return filepath.Join(home, domain.DefaultDbFolder)
 }

@@ -2,7 +2,10 @@ package cli
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/floppy-notes/floppy/internal/database"
+	"github.com/floppy-notes/floppy/internal/index"
 	"github.com/spf13/cobra"
 )
 
@@ -13,7 +16,19 @@ var searchCmd = &cobra.Command{
 	Short: "Search full-text",
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println(args)
+		db, err := database.Open(database.WithPath(vaultPath))
+		if err != nil {
+			return fmt.Errorf("opening database: %w", err)
+		}
+		defer db.Conn.Close()
+
+		query := strings.Join(args, " ")
+		results, err := index.Search(db, query, searchLimit)
+		if err != nil {
+			return fmt.Errorf("searching: %w", err)
+		}
+
+		fmt.Println(results)
 		return nil
 	},
 }

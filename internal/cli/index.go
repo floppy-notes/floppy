@@ -2,10 +2,8 @@ package cli
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/floppy-notes/floppy/internal/database"
-	"github.com/floppy-notes/floppy/internal/domain"
 	"github.com/floppy-notes/floppy/internal/index"
 	"github.com/spf13/cobra"
 )
@@ -21,7 +19,7 @@ var indexCmd = &cobra.Command{
 			return fmt.Errorf("incremental indexing not implemented yet, use --rebuild")
 		}
 
-		db, err := database.Open(database.WithPath(filepath.Join(vaultPath, domain.DefaultDbFolder)))
+		db, err := database.Open(database.WithPath(vaultPath))
 		if err != nil {
 			return fmt.Errorf("opening database: %w", err)
 		}
