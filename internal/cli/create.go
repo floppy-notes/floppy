@@ -34,7 +34,7 @@ func addCommonFlags(cmd *cobra.Command, flags *createFlags) {
 	cmd.Flags().StringSliceVarP(&flags.Tags, "tags", "t", nil, "tags to attach to the item")
 	cmd.Flags().StringSliceVarP(&flags.Related, "related", "r", nil, "IDs of related items")
 	cmd.Flags().StringVarP(&flags.Body, "body", "b", "", "item body content")
-	cmd.Flags().BoolVarP(&flags.Quiet, "quier", "q", false, "suppress output")
+	cmd.Flags().BoolVarP(&flags.Quiet, "quiet", "q", false, "suppress output")
 }
 
 func newCreateNoteCmd() *cobra.Command {
@@ -68,7 +68,8 @@ func newCreateTaskCmd() *cobra.Command {
 		},
 	}
 	addCommonFlags(cmd, flags)
-	cmd.Flags().StringVarP(&flags.Due, "due", "d", today(), "due date (YYYY-MM-DD)")
+	cmd.Flags().StringVarP(&flags.Due, "due", "d", "", "due date (YYYY-MM-DD)")
+	cmd.MarkFlagRequired("due")
 	return cmd
 }
 
@@ -88,7 +89,8 @@ func newCreateReminderCmd() *cobra.Command {
 		},
 	}
 	addCommonFlags(cmd, flags)
-	cmd.Flags().StringVar(&flags.RemindAt, "remind-at", nowMinute(), "when to be reminded (YYYY-MM-DD or YYYY-MM-DD HH:MM)")
+	cmd.Flags().StringVar(&flags.RemindAt, "remind-at", "", "when to be reminded (YYYY-MM-DD or YYYY-MM-DD HH:MM)")
+	cmd.MarkFlagRequired("remind-at")
 	return cmd
 }
 
@@ -98,19 +100,11 @@ func parseDate(s string) (time.Time, error) {
 	}
 	layouts := []string{"2006-01-02T15:04", "2006-01-02 15:04", "2006-01-02"}
 	for _, layout := range layouts {
-		if t, err := time.Parse(layout, s); err == nil {
+		if t, err := time.ParseInLocation(layout, s, time.Local); err == nil {
 			return t, nil
 		}
 	}
 	return time.Time{}, fmt.Errorf("%q: expected YYYY-MM-DD or YYYY-MM-DD HH:MM", s)
-}
-
-func today() string {
-	return time.Now().Format("2006-01-02")
-}
-
-func nowMinute() string {
-	return time.Now().Format("2006-01-02 15:04")
 }
 
 func init() {

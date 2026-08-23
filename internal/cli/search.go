@@ -11,9 +11,9 @@ var searchLimit int
 var searchCmd = &cobra.Command{
 	Use:   "search <query>",
 	Short: "Search full-text",
+	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println(args)
-		fmt.Println(cmd.Flags().GetInt("limit"))
 		return nil
 	},
 }

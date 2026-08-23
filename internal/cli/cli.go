@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
@@ -33,5 +34,5 @@ func defaultVaultPath() string {
 		return v
 	}
 	home, _ := os.UserHomeDir()
-	return home + "/floppy"
+	return filepath.Join(home, "/floppy")
 }
