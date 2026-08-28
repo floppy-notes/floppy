@@ -18,24 +18,6 @@ type Frontmatter struct {
 	RemindAt string `yaml:"remind_at"`
 }
 
-type ItemType string
-type TaskStatus string
-type ReminderStatus string
-
-const (
-	TypeNote     ItemType = "note"
-	TypeTask     ItemType = "task"
-	TypeReminder ItemType = "reminder"
-
-	TaskOpenStatus     TaskStatus = "open"
-	TaskDoneStatus     TaskStatus = "done"
-	TaskArchivedStatus TaskStatus = "archived"
-
-	ReminderPendingStatus   ReminderStatus = "pending"
-	ReminderFiredStatus     ReminderStatus = "fired"
-	ReminderDismissedStatus ReminderStatus = "dismissed"
-)
-
 func (f Frontmatter) Validate() error {
 	if err := f.generalValidation(); err != nil {
 		return err
@@ -55,7 +37,7 @@ func (f Frontmatter) generalValidation() error {
 	if isEmpty(f.ID) {
 		return fmt.Errorf("id can't be empty")
 	}
-	if !isValidItemType(f.Type) {
+	if !IsValidItemType(f.Type) {
 		return fmt.Errorf("invalid type: %q (should be: note, task or reminder)", f.Type)
 	}
 	if !isValidDate(time.RFC3339, f.Created) {
@@ -81,7 +63,7 @@ func (f Frontmatter) taskValidation() error {
 	if !isValidDate(time.DateOnly, f.Due) {
 		return fmt.Errorf("invalid due date format: %q (should be: %s)", f.Due, time.DateOnly)
 	}
-	if !isValidTaskStatus(f.Status) {
+	if !IsValidTaskStatus(f.Status) {
 		return fmt.Errorf("invalid task status: %q (should be: open, done, archived)", f.Status)
 	}
 	if !isEmpty(f.RemindAt) {
@@ -94,40 +76,13 @@ func (f Frontmatter) reminderValidation() error {
 	if !isValidDate(time.RFC3339, f.RemindAt) {
 		return fmt.Errorf("invalid remind_at date format: %q (should be: %s)", f.RemindAt, time.RFC3339)
 	}
-	if !isValidReminderStatus(f.Status) {
+	if !IsValidReminderStatus(f.Status) {
 		return fmt.Errorf("invalid reminder status: %q (should be: pending, fired, dismissed)", f.Status)
 	}
 	if !isEmpty(f.Due) {
 		return fmt.Errorf("reminder must not have a due date")
 	}
 	return nil
-}
-
-func isValidItemType(t string) bool {
-	switch ItemType(t) {
-	case TypeNote, TypeTask, TypeReminder:
-		return true
-	default:
-		return false
-	}
-}
-
-func isValidTaskStatus(s string) bool {
-	switch TaskStatus(s) {
-	case TaskOpenStatus, TaskDoneStatus, TaskArchivedStatus:
-		return true
-	default:
-		return false
-	}
-}
-
-func isValidReminderStatus(s string) bool {
-	switch ReminderStatus(s) {
-	case ReminderPendingStatus, ReminderFiredStatus, ReminderDismissedStatus:
-		return true
-	default:
-		return false
-	}
 }
 
 func isValidDate(layout string, d string) bool {

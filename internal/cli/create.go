@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/floppy-notes/floppy/internal/item"
 	"github.com/spf13/cobra"
@@ -92,19 +91,6 @@ func newCreateReminderCmd() *cobra.Command {
 	cmd.Flags().StringVar(&flags.RemindAt, "remind-at", "", "when to be reminded (YYYY-MM-DD or YYYY-MM-DD HH:MM)")
 	cmd.MarkFlagRequired("remind-at")
 	return cmd
-}
-
-func parseDate(s string) (time.Time, error) {
-	if s == "" {
-		return time.Time{}, nil
-	}
-	layouts := []string{"2006-01-02T15:04", "2006-01-02 15:04", "2006-01-02"}
-	for _, layout := range layouts {
-		if t, err := time.ParseInLocation(layout, s, time.Local); err == nil {
-			return t, nil
-		}
-	}
-	return time.Time{}, fmt.Errorf("%q: expected YYYY-MM-DD or YYYY-MM-DD HH:MM", s)
 }
 
 func init() {
