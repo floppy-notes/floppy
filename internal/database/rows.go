@@ -4,6 +4,7 @@ import "database/sql"
 
 type ItemRow struct {
 	ID       string
+	Title    string
 	Type     string
 	Created  string
 	Due      sql.NullString
@@ -13,8 +14,9 @@ type ItemRow struct {
 }
 
 type ItemFTSRow struct {
-	ID   string
-	Body string
+	ID    string
+	Title string
+	Body  string
 }
 
 type TagRow struct {

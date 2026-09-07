@@ -8,14 +8,15 @@ import (
 
 type Frontmatter struct {
 	ID      string   `yaml:"id"`
+	Title   string   `yaml:"title"`
 	Type    string   `yaml:"type"`
 	Created string   `yaml:"created"`
-	Tags    []string `yaml:"tags"`
-	Related []string `yaml:"related"`
+	Tags    []string `yaml:"tags,omitempty"`
+	Related []string `yaml:"related,omitempty"`
 
-	Due      string `yaml:"due"`
-	Status   string `yaml:"status"`
-	RemindAt string `yaml:"remind_at"`
+	Due      string `yaml:"due,omitempty"`
+	Status   string `yaml:"status,omitempty"`
+	RemindAt string `yaml:"remind_at,omitempty"`
 }
 
 func (f Frontmatter) Validate() error {
@@ -36,6 +37,9 @@ func (f Frontmatter) Validate() error {
 func (f Frontmatter) generalValidation() error {
 	if isEmpty(f.ID) {
 		return fmt.Errorf("id can't be empty")
+	}
+	if isEmpty(f.Title) {
+		return fmt.Errorf("title can't be empty")
 	}
 	if !IsValidItemType(f.Type) {
 		return fmt.Errorf("invalid type: %q (should be: note, task or reminder)", f.Type)

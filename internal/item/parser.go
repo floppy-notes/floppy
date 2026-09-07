@@ -9,18 +9,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var (
-	ErrNoFrontmatter              = errors.New("file lacks frontmatter or is poorly formatted")
-	ErrPoorlyFormattedFrontmatter = errors.New("frontmatter is poorly formatted")
-)
-
-const delim = "---"
-
 func Parse(raw []byte) (Item, error) {
 	raw = bytes.ReplaceAll(raw, []byte("\r\n"), []byte("\n"))
 
 	if !bytes.HasPrefix(raw, []byte(delim+"\n")) {
-		return Item{}, ErrNoFrontmatter
+		return Item{}, errors.New("file lacks frontmatter or is poorly formatted")
 	}
 
 	raw = raw[len(delim)+1:]
@@ -28,7 +21,7 @@ func Parse(raw []byte) (Item, error) {
 	frontmatterEnd, bodyStart, ok := findCloseDelim(raw)
 
 	if !ok {
-		return Item{}, ErrPoorlyFormattedFrontmatter
+		return Item{}, errors.New("frontmatter is poorly formatted")
 	}
 
 	rawFrontmatter := raw[:frontmatterEnd]
@@ -36,7 +29,7 @@ func Parse(raw []byte) (Item, error) {
 
 	var frontmatter Frontmatter
 	if err := yaml.Unmarshal(rawFrontmatter, &frontmatter); err != nil {
-		return Item{}, fmt.Errorf("%w: %v", ErrPoorlyFormattedFrontmatter, err)
+		return Item{}, fmt.Errorf("%w: %v", errors.New("frontmatter is poorly formatted"), err)
 	}
 
 	return Item{

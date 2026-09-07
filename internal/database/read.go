@@ -9,7 +9,7 @@ import (
 func Search(db *sql.DB, query string, limit int) ([]ItemRow, error) {
 	rows, err := db.Query(
 		`
-		SELECT items.id, items.type, items.created, items.due, items.status, items.remind_at, items.path
+		SELECT items.id, items.title, items.type, items.created, items.due, items.status, items.remind_at, items.path
 		FROM items_fts
 		JOIN items on items.id = items_fts.id
 		WHERE items_fts MATCH ?
@@ -27,7 +27,7 @@ func Search(db *sql.DB, query string, limit int) ([]ItemRow, error) {
 	var results []ItemRow
 	for rows.Next() {
 		r := new(ItemRow)
-		if err := rows.Scan(&r.ID, &r.Type, &r.Created, &r.Due, &r.Status, &r.RemindAt, &r.Path); err != nil {
+		if err := rows.Scan(&r.ID, &r.Title, &r.Type, &r.Created, &r.Due, &r.Status, &r.RemindAt, &r.Path); err != nil {
 			return []ItemRow{}, fmt.Errorf("scanning item: %w", err)
 		}
 		results = append(results, *r)
@@ -50,7 +50,7 @@ type ListFilter struct {
 
 func List(db *sql.DB, filter ListFilter, limit int) ([]ItemRow, error) {
 	query := `
-		SELECT items.id, items.type, items.created, items.due, items.status, items.remind_at, items.path FROM items
+		SELECT items.id, items.title, items.type, items.created, items.due, items.status, items.remind_at, items.path FROM items
 	`
 
 	var conditions []string
@@ -99,7 +99,7 @@ func List(db *sql.DB, filter ListFilter, limit int) ([]ItemRow, error) {
 	var results []ItemRow
 	for rows.Next() {
 		r := new(ItemRow)
-		if err := rows.Scan(&r.ID, &r.Type, &r.Created, &r.Due, &r.Status, &r.RemindAt, &r.Path); err != nil {
+		if err := rows.Scan(&r.ID, &r.Title, &r.Type, &r.Created, &r.Due, &r.Status, &r.RemindAt, &r.Path); err != nil {
 			return []ItemRow{}, fmt.Errorf("scanning item: %w", err)
 		}
 		results = append(results, *r)

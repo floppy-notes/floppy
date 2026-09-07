@@ -9,6 +9,7 @@ var schemaStatements = []string{
 	`
 	CREATE TABLE IF NOT EXISTS items (
 		id        TEXT PRIMARY KEY,
+		title     TEXT NOT NULL,
 		type      TEXT NOT NULL,
 		created   TEXT NOT NULL,
 		due       TEXT,
@@ -20,6 +21,7 @@ var schemaStatements = []string{
 	`
 	CREATE VIRTUAL TABLE IF NOT EXISTS items_fts USING fts5(
 		id UNINDEXED,
+		title,
 		body
 	)
 	`,

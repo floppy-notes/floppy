@@ -9,9 +9,9 @@ import (
 
 func insertItem(tx *sql.Tx, r ItemRow) error {
 	_, err := tx.Exec(
-		`INSERT INTO items (id, type, created, due, status, remind_at, path)
-		 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		r.ID, r.Type, r.Created, r.Due, r.Status, r.RemindAt, r.Path,
+		`INSERT INTO items (id, title, type, created, due, status, remind_at, path)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		r.ID, r.Title, r.Type, r.Created, r.Due, r.Status, r.RemindAt, r.Path,
 	)
 	if err != nil {
 		return fmt.Errorf("inserting item %q: %w", r.ID, err)
@@ -32,8 +32,8 @@ func insertTag(tx *sql.Tx, r TagRow) error {
 
 func insertItemFTS(tx *sql.Tx, r ItemFTSRow) error {
 	_, err := tx.Exec(
-		`INSERT INTO items_fts (id, body) VALUES (?, ?)`,
-		r.ID, r.Body,
+		`INSERT INTO items_fts (id, title, body) VALUES (?, ?, ?)`,
+		r.ID, r.Title, r.Body,
 	)
 	if err != nil {
 		return fmt.Errorf("inserting fts for item %q: %w", r.ID, err)
@@ -55,6 +55,7 @@ func insertEdge(tx *sql.Tx, r EdgeRow) error {
 func indexOne(tx *sql.Tx, it item.Item) error {
 	if err := insertItem(tx, ItemRow{
 		ID:       it.Front.ID,
+		Title:    it.Front.Title,
 		Type:     it.Front.Type,
 		Created:  it.Front.Created,
 		Due:      sql.NullString{String: it.Front.Due, Valid: it.Front.Due != ""},
@@ -64,7 +65,7 @@ func indexOne(tx *sql.Tx, it item.Item) error {
 	}); err != nil {
 		return err
 	}
-	if err := insertItemFTS(tx, ItemFTSRow{ID: it.Front.ID, Body: it.Body}); err != nil {
+	if err := insertItemFTS(tx, ItemFTSRow{ID: it.Front.ID, Title: it.Front.Title, Body: it.Body}); err != nil {
 		return err
 	}
 	for _, tag := range it.Front.Tags {
