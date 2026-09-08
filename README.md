@@ -1,4 +1,6 @@
-# floppy
+<p align="center">
+  <img src="docs/assets/logo.png" alt="floppy" width="120">
+</p>
 
 Local-first CLI for notes, tasks, and reminders, stored as plain Markdown
 files with YAML frontmatter.
