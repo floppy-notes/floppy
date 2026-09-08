@@ -51,7 +51,7 @@ var listFlags ListFlags
 
 var listCmd = &cobra.Command{
 	Use:   "list <params>",
-	Short: "list items",
+	Short: "List items",
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		if err := listFlags.validate(); err != nil {

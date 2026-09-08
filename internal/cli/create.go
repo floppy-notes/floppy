@@ -40,7 +40,7 @@ func newCreateCmd() *cobra.Command {
 	return cmd
 }
 
-func addCommonFlags(cmd *cobra.Command, flags *createFlags) {
+func addCommonCreateFlags(cmd *cobra.Command, flags *createFlags) {
 	cmd.Flags().StringVarP(&flags.Title, "title", "t", "", "item title")
 	cmd.Flags().StringSliceVar(&flags.Tags, "tags", nil, "tags to attach to the item")
 	cmd.Flags().StringSliceVarP(&flags.Related, "related", "r", nil, "IDs of related items")
@@ -72,7 +72,7 @@ func newCreateNoteCmd() *cobra.Command {
 
 		},
 	}
-	addCommonFlags(cmd, flags)
+	addCommonCreateFlags(cmd, flags)
 	return cmd
 }
 
@@ -103,7 +103,7 @@ func newCreateTaskCmd() *cobra.Command {
 			return err
 		},
 	}
-	addCommonFlags(cmd, flags)
+	addCommonCreateFlags(cmd, flags)
 	cmd.Flags().StringVarP(&flags.Due, "due", "d", "", "due date (YYYY-MM-DD)")
 	cmd.MarkFlagRequired("due")
 	return cmd
@@ -136,7 +136,7 @@ func newCreateReminderCmd() *cobra.Command {
 			return err
 		},
 	}
-	addCommonFlags(cmd, flags)
+	addCommonCreateFlags(cmd, flags)
 	cmd.Flags().StringVar(&flags.RemindAt, "remind-at", "", "when to be reminded (YYYY-MM-DD or YYYY-MM-DD HH:MM)")
 	cmd.MarkFlagRequired("remind-at")
 	return cmd
