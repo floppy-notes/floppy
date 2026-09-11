@@ -20,6 +20,7 @@ files with YAML frontmatter.
 - [The vault](#the-vault)
 - [Commands](#commands)
   - [`floppy create`](#floppy-create-notetaskreminder)
+  - [`floppy update`](#floppy-update-notetaskreminder)
   - [`floppy index --rebuild`](#floppy-index---rebuild)
   - [`floppy search`](#floppy-search-terms)
   - [`floppy list`](#floppy-list)
@@ -51,10 +52,10 @@ floppy create note --title "Sprint retro notes" --tags team,retro \
 
 floppy create task --title "Fix flaky CI job" --due 2026-09-15 --tags ci
 
-floppy index --rebuild
-
 floppy search flaky
 floppy list --type task --status open
+
+floppy update task --id <id> --status done
 ```
 
 ## The vault
@@ -89,8 +90,8 @@ for search/filtering, the index built from it).
 ### `floppy create note|task|reminder`
 
 Creates a new item: generates its `id`, validates the frontmatter, writes
-the `.md` file to the vault. It does **not** touch the index. Run
-`floppy index --rebuild` afterward to make the new item searchable/listable.
+the `.md` file to the vault, and indexes it immediately. It's searchable
+and listable as soon as the command returns.
 
 Common flags:
 
@@ -113,13 +114,45 @@ Type-specific flags:
 floppy create task --title "Review onboarding PR" -d 2026-09-15 --tags work
 ```
 
+### `floppy update note|task|reminder`
+
+Updates an existing item by `id`: rereads its `.md` file, applies the given
+changes, rewrites the file, and reindexes it immediately.
+
+Common flags:
+
+| Flag | Shorthand | Required | Description |
+| --- | --- | --- | --- |
+| `--id` | `-i` | yes | id of the item to update |
+| `--title` | `-t` | no | new title |
+| `--body` | `-b` | no | new body content (appended by default; see `--replace`) |
+| `--tags` | | no | tags to add (or replace, with `--replace`) |
+| `--related` | | no | related ids to add (or replace, with `--replace`) |
+| `--replace` | `-r` | no | replace `body`/`tags`/`related` instead of appending to them |
+| `--quiet` | `-q` | no | suppress output |
+
+Type-specific flags:
+
+| Command | Flag | Format |
+| --- | --- | --- |
+| `update task` | `--due, -d` | `YYYY-MM-DD` |
+| `update task` | `--status, -s` | `open`, `done`, or `archived` |
+| `update reminder` | `--remind-at` | `YYYY-MM-DD` or `YYYY-MM-DD HH:MM` |
+| `update reminder` | `--status, -s` | `pending`, `fired`, or `dismissed` |
+
+```sh
+floppy update task --id 2026-09-15-0001-review-onboarding-pr --status done
+```
+
 ### `floppy index --rebuild`
 
 Walks the vault, parses every `.md` file, and rebuilds the SQLite index from
 scratch inside a single transaction (if it fails midway, the previous index
-is left untouched). Only a full rebuild exists today. There is no
-incremental mode yet, so running the command without `--rebuild` returns an
-error instead of silently doing nothing.
+is left untouched). Only a full rebuild exists today; there is no
+incremental "just this file" mode, so running the command without
+`--rebuild` returns an error instead of silently doing nothing. `create` and
+`update` already index as they go, so a full rebuild is only needed after
+editing `.md` files by hand or to recover a deleted/corrupted index.
 
 ```sh
 floppy index --rebuild
@@ -204,6 +237,7 @@ around.
 
 ## Roadmap
 
-- Incremental indexing (today, any change requires `index --rebuild`)
+- Incremental indexing for hand-edited files (`create`/`update` already
+  index as they go; only manual `.md` edits still require `index --rebuild`)
 - Structured (JSON) output, for scripting and agent consumption
 - Backlinks/graph queries over `related`

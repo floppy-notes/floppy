@@ -66,14 +66,34 @@ floppy create reminder --title <string> --remind-at <YYYY-MM-DD[ HH:MM]> [--body
 
 - `--title` is required for all three; it's slugified into the file's `id`.
 - On success, exit `0`. The file is written to
-  `<vault>/<notes|tasks|reminders>/<YYYY>/<MM>/<id>.md`.
-- **The index is not updated automatically.** After any `create`, the item
-  will not show up in `search`/`list` until you run `index --rebuild`.
+  `<vault>/<notes|tasks|reminders>/<YYYY>/<MM>/<id>.md`, and the item is
+  indexed immediately, so it shows up in `search`/`list` right away. No
+  extra step needed.
 - `id` generation reads the target day's folder to compute the next
   sequence number, then writes the file. It is not atomic. Two `create`
   calls fired at effectively the same instant, for the same type and day,
   can race. Fine for interactive/sequential use; don't fire concurrent
   `create` calls from a batch job without serializing them.
+
+### Update an item
+
+```
+floppy update note     --id <id> [--title <string>] [--body <string>] [--tags a,b] [--related id1,id2] [--replace] [--quiet]
+floppy update task     --id <id> [--title ...] [--body ...] [--tags ...] [--related ...] [--due <YYYY-MM-DD>] [--status open|done|archived] [--replace] [--quiet]
+floppy update reminder --id <id> [--title ...] [--body ...] [--tags ...] [--related ...] [--remind-at <YYYY-MM-DD[ HH:MM]>] [--status pending|fired|dismissed] [--replace] [--quiet]
+```
+
+- `--id` is required for all three; it must match an existing item of that
+  type, or the command errors.
+- By default, `--body`, `--tags`, and `--related` are appended to the
+  existing values. Pass `--replace` to overwrite them instead. `--title`
+  always overwrites when set.
+- `--status` only exists on `update task` and `update reminder`. It is
+  validated against the type's allowed values (see [Data
+  model](#data-model)); an invalid value is silently ignored rather than
+  rejected, so check the file or re-run `list` to confirm the change took.
+- On success, the file is rewritten in place and reindexed immediately, the
+  same guarantee as `create`.
 
 ### Rebuild the index
 
@@ -81,11 +101,12 @@ floppy create reminder --title <string> --remind-at <YYYY-MM-DD[ HH:MM]> [--body
 floppy index --rebuild
 ```
 
-Full rebuild only, there is no incremental mode. Run this after any
-`create` (or any manual edit to a `.md` file) before relying on
-`search`/`list` to reflect it. Safe to call anytime: it's a full
-walk-and-reindex inside one transaction (a mid-rebuild failure leaves the
-previous index untouched).
+Full rebuild only, there is no incremental "just this file" mode. `create`
+and `update` already index as they write, so you only need this after
+editing a `.md` file by hand outside of `floppy`, or to recover a deleted
+or corrupted index. Safe to call anytime: it's a full walk-and-reindex
+inside one transaction (a mid-rebuild failure leaves the previous index
+untouched).
 
 ### Search
 
@@ -162,11 +183,9 @@ rebuild.
 
 ## Recommended workflow for an agent
 
-1. `create` the item(s) you need.
-2. `index --rebuild`.
-3. `search`/`list` to confirm, or read the file back directly if you need
+1. `create` (or `update`) the item(s) you need. Both index as they write,
+   so the item is queryable right after the command returns `0`.
+2. `search`/`list` to confirm, or read the file back directly if you need
    the exact frontmatter you just wrote.
-
-Steps 1 and 2 are separate on purpose (see [Create an
-item](#create-an-item)). Don't assume an item is queryable immediately
-after `create` returns `0`.
+3. Only run `index --rebuild` if you edited `.md` files by hand outside of
+   `floppy`, or suspect the index is out of sync with the vault.

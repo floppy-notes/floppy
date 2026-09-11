@@ -25,7 +25,7 @@ func (lf *ListFlags) validate() error {
 	}
 
 	if lf.Status != "" && (!item.IsValidTaskStatus(lf.Status) && !item.IsValidReminderStatus(lf.Status)) {
-		return fmt.Errorf("non existents status: %s", lf.Status)
+		return fmt.Errorf("nonexistent status: %s", lf.Status)
 	}
 
 	if lf.Since != "" {

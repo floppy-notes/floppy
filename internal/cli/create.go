@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/floppy-notes/floppy/internal/database"
 	"github.com/floppy-notes/floppy/internal/index"
 	"github.com/floppy-notes/floppy/internal/item"
 	"github.com/spf13/cobra"
@@ -40,6 +41,21 @@ func newCreateCmd() *cobra.Command {
 	return cmd
 }
 
+func createAndIndex(req index.CreateRequest) error {
+	db, err := database.Open(database.WithPath(vaultPath))
+	if err != nil {
+		return fmt.Errorf("opening database: %w", err)
+	}
+	defer db.Conn.Close()
+
+	it, err := index.Create(vaultPath, req, time.Now())
+	if err != nil {
+		return err
+	}
+
+	return db.Reindex(it)
+}
+
 func addCommonCreateFlags(cmd *cobra.Command, flags *createFlags) {
 	cmd.Flags().StringVarP(&flags.Title, "title", "t", "", "item title")
 	cmd.Flags().StringSliceVar(&flags.Tags, "tags", nil, "tags to attach to the item")
@@ -60,15 +76,13 @@ func newCreateNoteCmd() *cobra.Command {
 				return err
 			}
 
-			_, err := index.Create(vaultPath, index.CreateRequest{
+			return createAndIndex(index.CreateRequest{
 				Type:    item.TypeNote,
 				Title:   flags.Title,
 				Body:    flags.Body,
 				Tags:    flags.Tags,
 				Related: flags.Related,
-			}, time.Now())
-
-			return err
+			})
 
 		},
 	}
@@ -91,16 +105,14 @@ func newCreateTaskCmd() *cobra.Command {
 				return fmt.Errorf("invalid --due: %w", err)
 			}
 
-			_, err = index.Create(vaultPath, index.CreateRequest{
+			return createAndIndex(index.CreateRequest{
 				Type:    item.TypeTask,
 				Title:   flags.Title,
 				Body:    flags.Body,
 				Tags:    flags.Tags,
 				Related: flags.Related,
 				Due:     due.Format(time.DateOnly),
-			}, time.Now())
-
-			return err
+			})
 		},
 	}
 	addCommonCreateFlags(cmd, flags)
@@ -124,16 +136,14 @@ func newCreateReminderCmd() *cobra.Command {
 				return fmt.Errorf("invalid --remind-at: %w", err)
 			}
 
-			_, err = index.Create(vaultPath, index.CreateRequest{
+			return createAndIndex(index.CreateRequest{
 				Type:     item.TypeReminder,
 				Title:    flags.Title,
 				Body:     flags.Body,
 				Tags:     flags.Tags,
 				Related:  flags.Related,
 				RemindAt: remindAt.Format(time.RFC3339),
-			}, time.Now())
-
-			return err
+			})
 		},
 	}
 	addCommonCreateFlags(cmd, flags)

@@ -19,9 +19,9 @@ import (
 var nonAlnum = regexp.MustCompile(`[^a-z0-9]+`)
 
 func BuildId(folderName string, name string, createdTime time.Time) (string, error) {
-	formatedTime := createdTime.Format("2006-01-02")
+	formattedTime := createdTime.Format("2006-01-02")
 
-	splitString := strings.Split(formatedTime, "-")
+	splitString := strings.Split(formattedTime, "-")
 
 	targetFolder := filepath.Join(folderName, splitString[0], splitString[1])
 
@@ -31,7 +31,7 @@ func BuildId(folderName string, name string, createdTime time.Time) (string, err
 		return "", fmt.Errorf("building id: %w", err)
 	}
 
-	builtId := fmt.Sprintf("%s-%04d-%s", formatedTime, nextId, slugfy(name))
+	builtId := fmt.Sprintf("%s-%04d-%s", formattedTime, nextId, slugify(name))
 
 	return builtId, nil
 }
@@ -45,7 +45,7 @@ func nextIdSequence(targetFolder string) (int, error) {
 		return 0, fmt.Errorf("walking %s: %w", targetFolder, err)
 	}
 
-	lastestSeq := 0
+	latestSeq := 0
 
 	for _, i := range items {
 		parts := strings.Split(i.Front.ID, "-")
@@ -60,14 +60,14 @@ func nextIdSequence(targetFolder string) (int, error) {
 			return 0, fmt.Errorf("invalid sequence id. It should be an integer: %w", err)
 		}
 
-		lastestSeq = int(max(seq, lastestSeq))
+		latestSeq = int(max(seq, latestSeq))
 
 	}
 
-	return lastestSeq + 1, nil
+	return latestSeq + 1, nil
 }
 
-func slugfy(s string) string {
+func slugify(s string) string {
 	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
 	ascii, _, _ := transform.String(t, s)
 

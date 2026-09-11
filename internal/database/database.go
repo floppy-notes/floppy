@@ -89,3 +89,12 @@ func (d *Database) Rebuild(items []item.Item) error {
 		return nil
 	})
 }
+
+func (d *Database) Reindex(i item.Item) error {
+	return d.RunInTransaction(func(tx *sql.Tx) error {
+		if err := deleteItem(tx, i.Front.ID); err != nil {
+			return err
+		}
+		return indexOne(tx, i)
+	})
+}

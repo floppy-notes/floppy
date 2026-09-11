@@ -2,9 +2,36 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 )
+
+func FindByIdAndType(db *sql.DB, id string, itemType string) (ItemRow, error) {
+	row := db.QueryRow(
+		`
+		SELECT items.id, items.title, items.type, items.created, items.due, items.status, items.remind_at, items.path 
+		FROM items
+		WHERE items.id = ? AND items.type = ?
+		`, id, itemType,
+	)
+
+	if row == nil {
+		return ItemRow{}, fmt.Errorf("searching row: id %s not found", id)
+	}
+
+	var result ItemRow
+
+	if err := row.Scan(&result.ID, &result.Title, &result.Type, &result.Created, &result.Due, &result.Status, &result.RemindAt, &result.Path); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ItemRow{}, fmt.Errorf("no item found with ID %s", id)
+		}
+		return ItemRow{}, fmt.Errorf("Query failed: %v", err)
+
+	}
+
+	return result, nil
+}
 
 func Search(db *sql.DB, query string, limit int) ([]ItemRow, error) {
 	rows, err := db.Query(

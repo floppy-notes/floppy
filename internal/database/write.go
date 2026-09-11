@@ -80,3 +80,20 @@ func indexOne(tx *sql.Tx, it item.Item) error {
 	}
 	return nil
 }
+
+func deleteItem(tx *sql.Tx, id string) error {
+	stmts := []string{
+		"DELETE FROM items WHERE id = ?",
+		"DELETE FROM items_fts WHERE id = ?",
+		"DELETE FROM tags WHERE item_id = ?",
+		"DELETE FROM edges WHERE source_id = ?",
+	}
+
+	for _, q := range stmts {
+		if _, err := tx.Exec(q, id); err != nil {
+			return fmt.Errorf("deleting item %q: %w", id, err)
+		}
+	}
+
+	return nil
+}
