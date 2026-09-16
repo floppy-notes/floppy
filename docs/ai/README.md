@@ -90,6 +90,11 @@ floppy create reminder --title <string> --remind-at <YYYY-MM-DD[ HH:MM]> [--body
   calls fired at effectively the same instant, for the same type and day,
   can race. Fine for interactive/sequential use; don't fire concurrent
   `create` calls from a batch job without serializing them.
+- Files whose `id` does not follow `<YYYY-MM-DD>-<NNNN>-<slug>` are ignored
+  when computing that sequence, so a hand-named file in the folder does not
+  block `create`.
+- A title with no letters or digits (`"!!!"`) slugifies to `untitled`, and
+  the `title` in the frontmatter keeps whatever you passed.
 
 ### Update an item
 
@@ -135,6 +140,11 @@ floppy search <term> [<term> ...] [--limit N]   # default limit: 20
 Full-text (FTS5) over `title` + body, ranked by relevance. Requires at
 least one term. There is no "list everything" mode here; use `list` for
 that.
+
+Terms are passed to FTS5 as written, so FTS5 operators (`AND`, `OR`,
+`NEAR`) work, and so do its syntax errors: an unbalanced quote or a bare
+`*` exits non-zero with `invalid search query`. Quote your terms if you
+want them treated literally.
 
 ### List
 

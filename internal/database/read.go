@@ -46,6 +46,9 @@ func Search(db *sql.DB, query string, limit int) ([]ItemRow, error) {
 	)
 
 	if err != nil {
+		if isQuerySyntaxError(err) {
+			return []ItemRow{}, fmt.Errorf("invalid search query %q: check for unbalanced quotes and special characters", query)
+		}
 		return []ItemRow{}, fmt.Errorf("searching items: %w", err)
 	}
 
@@ -65,6 +68,13 @@ func Search(db *sql.DB, query string, limit int) ([]ItemRow, error) {
 	}
 
 	return results, nil
+}
+
+func isQuerySyntaxError(err error) bool {
+	msg := err.Error()
+	return strings.Contains(msg, "fts5: syntax error") ||
+		strings.Contains(msg, "unterminated string") ||
+		strings.Contains(msg, "unknown special query")
 }
 
 type ListFilter struct {

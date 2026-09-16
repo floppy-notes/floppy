@@ -34,6 +34,12 @@ func Walk(vaultRootDir string) ([]item.Item, []error, error) {
 			skipped = append(skipped, fmt.Errorf("skipping %s: %w", path, err))
 			return nil
 		}
+
+		if err := parsedItem.Front.Validate(); err != nil {
+			skipped = append(skipped, fmt.Errorf("skipping %s: %w", path, err))
+			return nil
+		}
+
 		parsedItem.Path = path
 		items = append(items, parsedItem)
 		return nil

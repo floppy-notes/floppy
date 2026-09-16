@@ -51,17 +51,16 @@ func nextIdSequence(targetFolder string) (int, error) {
 		parts := strings.Split(i.Front.ID, "-")
 
 		if len(parts) < 4 {
-			return 0, fmt.Errorf("invalid id format in %s", i.Path)
+			continue
 		}
 
 		seq, err := strconv.Atoi(parts[3])
 
 		if err != nil {
-			return 0, fmt.Errorf("invalid sequence id. It should be an integer: %w", err)
+			continue
 		}
 
 		latestSeq = int(max(seq, latestSeq))
-
 	}
 
 	return latestSeq + 1, nil
@@ -71,6 +70,11 @@ func slugify(s string) string {
 	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
 	ascii, _, _ := transform.String(t, s)
 
-	slug := nonAlnum.ReplaceAllString(strings.ToLower(ascii), "-")
-	return strings.Trim(slug, "-")
+	slug := strings.Trim(nonAlnum.ReplaceAllString(strings.ToLower(ascii), "-"), "-")
+
+	if slug == "" {
+		return "untitled"
+	}
+
+	return slug
 }

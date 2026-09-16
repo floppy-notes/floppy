@@ -25,7 +25,7 @@ var searchCmd = &cobra.Command{
 		query := strings.Join(args, " ")
 		results, err := index.Search(db, query, searchLimit)
 		if err != nil {
-			return fmt.Errorf("searching: %w", err)
+			return err
 		}
 
 		return writeItems(cmd.OutOrStdout(), results)
