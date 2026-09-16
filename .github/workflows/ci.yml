@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "these files are not gofmt'd:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: build
+        run: go build ./...
+
+      - name: test
+        run: go test ./...
+
+      - name: smoke
+        run: |
+          go build -o floppy ./cmd/floppy
+          ./floppy --version
+          vault=$(mktemp -d)
+          ./floppy --vault "$vault" create task --title "ci smoke" --due 2026-12-31 --quiet
+          ./floppy --vault "$vault" list --type task | grep -q '"count": 1'
+          ./floppy --vault "$vault" search smoke | grep -q "ci smoke"
