@@ -27,6 +27,8 @@ func Execute() error {
 }
 
 func init() {
+	rootCmd.Version = versionString()
+	rootCmd.SetVersionTemplate("floppy {{.Version}}\n")
 	rootCmd.PersistentFlags().StringVar(&vaultPath, "vault", defaultVaultPath(), "vault path")
 }
 

@@ -17,6 +17,8 @@ type Frontmatter struct {
 	Due      string `yaml:"due,omitempty"`
 	Status   string `yaml:"status,omitempty"`
 	RemindAt string `yaml:"remind_at,omitempty"`
+
+	Extra map[string]any `yaml:",inline"`
 }
 
 func (f Frontmatter) Validate() error {

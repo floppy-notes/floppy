@@ -45,6 +45,10 @@ cd floppy
 go build -o floppy ./cmd/floppy
 ```
 
+`floppy --version` reports the build. A source build picks up the commit from
+git on its own; release builds stamp the tag with
+`-ldflags "-X github.com/floppy-notes/floppy/internal/cli.version=v0.1.0"`.
+
 ## Quick start
 
 ```sh
