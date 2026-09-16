@@ -72,8 +72,11 @@ var listCmd = &cobra.Command{
 			Until:  listFlags.Until,
 		}, listFlags.Limit)
 
-		fmt.Println(results)
-		return nil
+		if err != nil {
+			return fmt.Errorf("listing items: %w", err)
+		}
+
+		return writeItems(cmd.OutOrStdout(), results)
 	},
 }
 

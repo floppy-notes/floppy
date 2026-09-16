@@ -28,8 +28,7 @@ var searchCmd = &cobra.Command{
 			return fmt.Errorf("searching: %w", err)
 		}
 
-		fmt.Println(results)
-		return nil
+		return writeItems(cmd.OutOrStdout(), results)
 	},
 }
 

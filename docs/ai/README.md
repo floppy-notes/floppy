@@ -27,32 +27,45 @@ $ echo $?
 
 ## Output format: read this before parsing anything
 
-Commands that print results (`search`, `list`) currently print Go's default
-`%v` formatting of a struct slice, **not JSON**. Example, verbatim:
+Commands that print results (`search`, `list`) emit JSON on stdout, one
+object per invocation:
 
+```json
+{
+  "items": [
+    {
+      "id": "2026-09-16-0001-fix-flaky-ci-job",
+      "title": "Fix flaky CI job",
+      "type": "task",
+      "created": "2026-09-16T13:57:53-03:00",
+      "due": "2026-09-30",
+      "status": "open",
+      "remind_at": null,
+      "path": "/home/me/.floppy/tasks/2026/09/2026-09-16-0001-fix-flaky-ci-job.md"
+    }
+  ],
+  "count": 1
+}
 ```
-[{2026-09-07-0001-review-onboarding-pr Review onboarding PR task 2026-09-07T00:51:57-03:00 {2026-09-15 true} {open true} { false} }]
-```
 
-That's one `ItemRow` with fields, in this fixed order:
-`ID, Title, Type, Created, Due, Status, RemindAt, Path`. `Due`, `Status`, and
-`RemindAt` are nullable, so each prints as `{value valid}`. `{2026-09-15
-true}` means "present, value is 2026-09-15"; `{ false}` means "absent" (the
-value slot is an empty string, ignore it, only `valid` matters).
+Guarantees you can code against:
 
-**Practical consequence: don't try to regex/split this reliably for
-anything beyond a quick manual check.** There is no `--json` flag yet (see
-[Roadmap](../../README.md#roadmap)). If you need structured, versioned
-output, the safest options today are:
+- `items` is always an array, never `null`. No results means `{"items": [],
+  "count": 0}` and exit `0`, an empty result is not an error.
+- Every field above is always present. The nullable ones (`due`, `status`,
+  `remind_at`) are `null` when absent rather than omitted, so you can read
+  them without an existence check. `due` is only set on tasks, `remind_at`
+  only on reminders, `status` on tasks and reminders.
+- `path` is absolute and points at the Markdown file backing the item.
+- The response is an object, not a bare array, so future fields can be added
+  alongside `items` without breaking your parser. Ignore keys you don't know.
 
-- **Read the `.md` files directly.** They're plain Markdown with YAML
-  frontmatter (see [Data model](#data-model) below). This is the most
-  robust integration path today, since the file format is the actual
-  source of truth and won't shift shape under you the way the CLI's debug
-  print might.
-- Or run `search`/`list`, then re-derive the identifiers you need (the
-  `id` field, the only unambiguous, stable token in that output) and go
-  read the corresponding file from the vault.
+Errors go to **stderr** (prefixed `floppy:`) with a non-zero exit code, never
+to stdout, stdout is either valid JSON or empty.
+
+The `.md` files remain the source of truth: this JSON is derived from the
+SQLite index. If you need the body of an item, read `path`; `search`/`list`
+return metadata only.
 
 ## Commands
 

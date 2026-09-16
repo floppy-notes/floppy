@@ -24,6 +24,7 @@ files with YAML frontmatter.
   - [`floppy index --rebuild`](#floppy-index---rebuild)
   - [`floppy search`](#floppy-search-terms)
   - [`floppy list`](#floppy-list)
+  - [Output](#output)
 - [Data model](#data-model)
 - [AI / agent integration](#ai--agent-integration)
 - [Roadmap](#roadmap)
@@ -193,6 +194,39 @@ floppy list --type task --status open
 floppy list --tag golang --since 2026-09-01
 ```
 
+### Output
+
+`search` and `list` print JSON on stdout — an object with `items` and
+`count`, metadata only (read `path` for the body):
+
+```json
+{
+  "items": [
+    {
+      "id": "2026-09-16-0001-fix-flaky-ci-job",
+      "title": "Fix flaky CI job",
+      "type": "task",
+      "created": "2026-09-16T13:57:53-03:00",
+      "due": "2026-09-30",
+      "status": "open",
+      "remind_at": null,
+      "path": "/home/me/.floppy/tasks/2026/09/2026-09-16-0001-fix-flaky-ci-job.md"
+    }
+  ],
+  "count": 1
+}
+```
+
+`items` is always an array, so no results is `{"items": [], "count": 0}` with
+exit `0`. Errors go to stderr; stdout stays parseable. Pipe it straight into
+`jq`:
+
+```sh
+floppy list --type task --status open | jq -r '.items[].title'
+```
+
+See [`docs/ai/`](docs/ai/) for the full contract.
+
 ## Data model
 
 Every item is a Markdown file with YAML frontmatter:
@@ -239,5 +273,4 @@ around.
 
 - Incremental indexing for hand-edited files (`create`/`update` already
   index as they go; only manual `.md` edits still require `index --rebuild`)
-- Structured (JSON) output, for scripting and agent consumption
 - Backlinks/graph queries over `related`
