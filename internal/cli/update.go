@@ -38,6 +38,28 @@ func newUpdateCmd() *cobra.Command {
 	return cmd
 }
 
+func runUpdate(cmd *cobra.Command, flags *updateFlags, req index.UpdateRequest) error {
+	db, err := database.Open(database.WithPath(vaultPath))
+
+	if err != nil {
+		return fmt.Errorf("opening database: %w", err)
+	}
+
+	defer db.Conn.Close()
+
+	it, err := index.Update(db, req, flags.Replace)
+
+	if err != nil {
+		return fmt.Errorf("updating item: %w", err)
+	}
+
+	if flags.Quiet {
+		return nil
+	}
+
+	return writeItem(cmd.OutOrStdout(), it)
+}
+
 func addCommonUpdateFlags(cmd *cobra.Command, flags *updateFlags) {
 	cmd.Flags().BoolVarP(&flags.Replace, "replace", "r", false, "should replace content")
 	cmd.Flags().StringVarP(&flags.ID, "id", "i", "", "item's id")
@@ -46,6 +68,7 @@ func addCommonUpdateFlags(cmd *cobra.Command, flags *updateFlags) {
 	cmd.Flags().StringSliceVar(&flags.Tags, "tags", nil, "set new item's tags")
 	cmd.Flags().StringSliceVar(&flags.Related, "related", nil, "set new item's related")
 	cmd.Flags().BoolVarP(&flags.Quiet, "quiet", "q", false, "suppress output")
+	cmd.MarkFlagRequired("id")
 }
 
 func newUpdateNoteCmd() *cobra.Command {
@@ -55,24 +78,14 @@ func newUpdateNoteCmd() *cobra.Command {
 		Use:   "note",
 		Short: "Update note",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			db, err := database.Open(database.WithPath(vaultPath))
-
-			if err != nil {
-				return fmt.Errorf("opening database: %w", err)
-			}
-
-			defer db.Conn.Close()
-
-			index.Update(db, index.UpdateRequest{
+			return runUpdate(cmd, flags, index.UpdateRequest{
 				ID:      flags.ID,
 				Type:    item.TypeNote,
 				Title:   flags.Title,
 				Body:    flags.Body,
 				Tags:    flags.Tags,
 				Related: flags.Related,
-			}, flags.Replace)
-
-			return nil
+			})
 		},
 	}
 	addCommonUpdateFlags(cmd, flags)
@@ -97,15 +110,7 @@ func newUpdateTaskCmd() *cobra.Command {
 				dueStr = due.Format(time.DateOnly)
 			}
 
-			db, err := database.Open(database.WithPath(vaultPath))
-
-			if err != nil {
-				return fmt.Errorf("opening database: %w", err)
-			}
-
-			defer db.Conn.Close()
-
-			index.Update(db, index.UpdateRequest{
+			return runUpdate(cmd, flags, index.UpdateRequest{
 				ID:      flags.ID,
 				Type:    item.TypeTask,
 				Title:   flags.Title,
@@ -114,9 +119,7 @@ func newUpdateTaskCmd() *cobra.Command {
 				Related: flags.Related,
 				Due:     dueStr,
 				Status:  flags.Status,
-			}, flags.Replace)
-
-			return nil
+			})
 		},
 	}
 
@@ -144,15 +147,7 @@ func newUpdateReminderCmd() *cobra.Command {
 				remindAtStr = remindAt.Format(time.RFC3339)
 			}
 
-			db, err := database.Open(database.WithPath(vaultPath))
-
-			if err != nil {
-				return fmt.Errorf("opening database: %w", err)
-			}
-
-			defer db.Conn.Close()
-
-			index.Update(db, index.UpdateRequest{
+			return runUpdate(cmd, flags, index.UpdateRequest{
 				ID:       flags.ID,
 				Type:     item.TypeReminder,
 				Title:    flags.Title,
@@ -161,9 +156,7 @@ func newUpdateReminderCmd() *cobra.Command {
 				Related:  flags.Related,
 				RemindAt: remindAtStr,
 				Status:   flags.Status,
-			}, flags.Replace)
-
-			return nil
+			})
 		},
 	}
 

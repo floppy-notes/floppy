@@ -1,9 +1,8 @@
 # Using floppy from an agent
 
-This document is a contract, not a tutorial: exact commands, flags, output
-shapes, and exit codes for anything that shells out to `floppy` (an agent,
-an MCP tool wrapper, a script). For the conceptual overview, see the
-[top-level README](../../README.md).
+Exact commands, flags, output shapes, and exit codes for anything that
+shells out to `floppy`: an agent, an MCP tool wrapper, a script. For the
+conceptual overview, see the [top-level README](../../README.md).
 
 ## Invocation
 
@@ -15,8 +14,8 @@ floppy [--vault <path>] <command> [flags]
   omitted, floppy resolves the vault root from `FLOPPY_VAULT`, then
   `~/.floppy`.
 - Exit code is `0` on success, `1` on any error. On error, a single line is
-  written to **stderr** in the form `floppy: <message>`. Nothing is written
-  to stdout.
+  written to stderr in the form `floppy: <message>`. Nothing is written to
+  stdout.
 
 ```
 $ floppy create task --title "x"
@@ -25,7 +24,7 @@ $ echo $?
 1
 ```
 
-## Output format: read this before parsing anything
+## Output format
 
 Commands that print results (`search`, `list`) emit JSON on stdout, one
 object per invocation:
@@ -48,10 +47,10 @@ object per invocation:
 }
 ```
 
-Guarantees you can code against:
+Guarantees:
 
 - `items` is always an array, never `null`. No results means `{"items": [],
-  "count": 0}` and exit `0`, an empty result is not an error.
+  "count": 0}` and exit `0`. An empty result is not an error.
 - Every field above is always present. The nullable ones (`due`, `status`,
   `remind_at`) are `null` when absent rather than omitted, so you can read
   them without an existence check. `due` is only set on tasks, `remind_at`
@@ -60,8 +59,8 @@ Guarantees you can code against:
 - The response is an object, not a bare array, so future fields can be added
   alongside `items` without breaking your parser. Ignore keys you don't know.
 
-Errors go to **stderr** (prefixed `floppy:`) with a non-zero exit code, never
-to stdout, stdout is either valid JSON or empty.
+Errors go to stderr (prefixed `floppy:`) with a non-zero exit code, never to
+stdout. Stdout holds either valid JSON or nothing.
 
 The `.md` files remain the source of truth: this JSON is derived from the
 SQLite index. If you need the body of an item, read `path`; `search`/`list`
@@ -82,6 +81,10 @@ floppy create reminder --title <string> --remind-at <YYYY-MM-DD[ HH:MM]> [--body
   `<vault>/<notes|tasks|reminders>/<YYYY>/<MM>/<id>.md`, and the item is
   indexed immediately, so it shows up in `search`/`list` right away. No
   extra step needed.
+- The created item is printed to stdout as a single JSON object, with the
+  same fields as a `list` entry and no `items`/`count` wrapper. Read the
+  generated `id` from there instead of guessing the slug or re-querying.
+  Pass `--quiet` to suppress it when you only care about the exit code.
 - `id` generation reads the target day's folder to compute the next
   sequence number, then writes the file. It is not atomic. Two `create`
   calls fired at effectively the same instant, for the same type and day,
@@ -103,10 +106,12 @@ floppy update reminder --id <id> [--title ...] [--body ...] [--tags ...] [--rela
   always overwrites when set.
 - `--status` only exists on `update task` and `update reminder`. It is
   validated against the type's allowed values (see [Data
-  model](#data-model)); an invalid value is silently ignored rather than
-  rejected, so check the file or re-run `list` to confirm the change took.
+  model](#data-model)); an invalid value is rejected with a non-zero exit
+  and nothing is written. The check runs before the file is touched, so a
+  bad flag does not leave an item half-updated.
 - On success, the file is rewritten in place and reindexed immediately, the
-  same guarantee as `create`.
+  same guarantee as `create`, and the updated item is printed to stdout as
+  a single JSON object (`--quiet` suppresses it).
 
 ### Rebuild the index
 
@@ -114,7 +119,7 @@ floppy update reminder --id <id> [--title ...] [--body ...] [--tags ...] [--rela
 floppy index --rebuild
 ```
 
-Full rebuild only, there is no incremental "just this file" mode. `create`
+Full rebuild only; there is no incremental "just this file" mode. `create`
 and `update` already index as they write, so you only need this after
 editing a `.md` file by hand outside of `floppy`, or to recover a deleted
 or corrupted index. Safe to call anytime: it's a full walk-and-reindex
@@ -128,7 +133,7 @@ floppy search <term> [<term> ...] [--limit N]   # default limit: 20
 ```
 
 Full-text (FTS5) over `title` + body, ranked by relevance. Requires at
-least one term. There's no "list everything" mode here, use `list` for
+least one term. There is no "list everything" mode here; use `list` for
 that.
 
 ### List
@@ -138,8 +143,8 @@ floppy list [--type note|task|reminder] [--status <value>] [--tag <value>]
             [--since <date>] [--until <date>] [--limit N]   # default limit: 10
 ```
 
-Metadata filtering, with no ranking involved: this is "browse", not "find".
-All flags are optional and combine with AND.
+Metadata filtering, with no ranking involved. All flags are optional and
+combine with AND.
 
 - `--status` accepts either a task status (`open`/`done`/`archived`) or a
   reminder status (`pending`/`fired`/`dismissed`). It does not cross-check
@@ -149,12 +154,6 @@ All flags are optional and combine with AND.
   `YYYY-MM-DDTHH:MM`, and filter on `created`, not on `due` or
   `remind_at`, even when `--type task`/`--type reminder` is set.
 - `--tag` takes exactly one tag, not a list.
-
-**Known gap:** as of this writing, `list` does not propagate errors from the
-underlying query. A failed `list` call currently still exits `0` and
-prints whatever came back (often nothing useful). Don't treat exit code `0`
-from `list` as strong proof the query executed as intended; if the returned
-set looks suspicious, cross-check by reading the vault directly.
 
 ## Data model
 

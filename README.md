@@ -82,9 +82,9 @@ my-vault/
 └── reminders/2026/09/2026-09-08-0001-call-the-dentist.md
 ```
 
-The filename mirrors the frontmatter `id` on purpose. It's there for human
-browsing, not for queries. Queries always go through the frontmatter (or,
-for search/filtering, the index built from it).
+The filename mirrors the frontmatter `id`, which keeps the vault readable
+when you browse it by hand. Queries always go through the frontmatter, or
+through the index built from it.
 
 ## Commands
 
@@ -174,8 +174,8 @@ floppy search onboarding review --limit 5
 
 ### `floppy list`
 
-Lists items by metadata, without ranking. It's the counterpart to `search`
-for "browse/filter" instead of "find by relevance."
+Lists items by metadata, without ranking. Use `search` when you want
+results ordered by relevance.
 
 | Flag | Shorthand | Description |
 | --- | --- | --- |
@@ -196,8 +196,8 @@ floppy list --tag golang --since 2026-09-01
 
 ### Output
 
-`search` and `list` print JSON on stdout — an object with `items` and
-`count`, metadata only (read `path` for the body):
+`search` and `list` print JSON on stdout. The object carries `items` and
+`count`, and holds metadata only (read `path` for the body):
 
 ```json
 {
@@ -218,12 +218,15 @@ floppy list --tag golang --since 2026-09-01
 ```
 
 `items` is always an array, so no results is `{"items": [], "count": 0}` with
-exit `0`. Errors go to stderr; stdout stays parseable. Pipe it straight into
-`jq`:
+exit `0`. Errors go to stderr, so stdout stays parseable. Pipe it into `jq`:
 
 ```sh
 floppy list --type task --status open | jq -r '.items[].title'
 ```
+
+`create` and `update` print the resulting item as a single JSON object,
+which is where you read the generated `id` from. Use `--quiet` to suppress
+it.
 
 See [`docs/ai/`](docs/ai/) for the full contract.
 

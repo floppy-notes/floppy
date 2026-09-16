@@ -32,3 +32,6 @@ go.work.sum
 # .vscode/
 
 floppy.db
+
+# Backlog de features (pasta de trabalho local)
+backlog/

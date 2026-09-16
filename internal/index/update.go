@@ -22,23 +22,44 @@ type UpdateRequest struct {
 	Status   string
 }
 
-func Update(db *database.Database, req UpdateRequest, isReplace bool) error {
+func (req UpdateRequest) validate() error {
+	switch req.Type {
+	case item.TypeNote:
+	case item.TypeTask:
+		if req.Status != "" && !item.IsValidTaskStatus(req.Status) {
+			return fmt.Errorf("invalid task status: %q (should be: open, done, archived)", req.Status)
+		}
+	case item.TypeReminder:
+		if req.Status != "" && !item.IsValidReminderStatus(req.Status) {
+			return fmt.Errorf("invalid reminder status: %q (should be: pending, fired, dismissed)", req.Status)
+		}
+	default:
+		return fmt.Errorf("unsupported item type: %s", req.Type)
+	}
+	return nil
+}
+
+func Update(db *database.Database, req UpdateRequest, isReplace bool) (item.Item, error) {
+	if err := req.validate(); err != nil {
+		return item.Item{}, err
+	}
+
 	row, err := database.FindByIdAndType(db.Conn, req.ID, string(req.Type))
 
 	if err != nil {
-		return err
+		return item.Item{}, err
 	}
 
 	raw, err := os.ReadFile(row.Path)
 
 	if err != nil {
-		return fmt.Errorf("reading item file: %w", err)
+		return item.Item{}, fmt.Errorf("reading item file: %w", err)
 	}
 
 	it, err := item.Parse(raw)
 
 	if err != nil {
-		return fmt.Errorf("parsing item file : %w", err)
+		return item.Item{}, fmt.Errorf("parsing item file : %w", err)
 	}
 
 	it.Path = row.Path
@@ -46,36 +67,37 @@ func Update(db *database.Database, req UpdateRequest, isReplace bool) error {
 	defineCommon(&it, req, isReplace)
 
 	switch req.Type {
-	case item.TypeNote:
 	case item.TypeTask:
 		if req.Due != "" {
 			it.Front.Due = req.Due
 		}
-		if req.Status != "" && item.IsValidTaskStatus(req.Status) {
+		if req.Status != "" {
 			it.Front.Status = req.Status
 		}
 	case item.TypeReminder:
 		if req.RemindAt != "" {
 			it.Front.RemindAt = req.RemindAt
 		}
-		if req.Status != "" && item.IsValidReminderStatus(req.Status) {
+		if req.Status != "" {
 			it.Front.Status = req.Status
 		}
-	default:
-		return fmt.Errorf("unsupported item type: %s", req.Type)
 	}
 
 	rawContent, err := item.Format(it)
 
 	if err != nil {
-		return err
+		return item.Item{}, err
 	}
 
 	if err := vault.Overwrite(it.Path, rawContent); err != nil {
-		return err
+		return item.Item{}, err
 	}
 
-	return db.Reindex(it)
+	if err := db.Reindex(it); err != nil {
+		return item.Item{}, err
+	}
+
+	return it, nil
 }
 
 func defineCommon(i *item.Item, req UpdateRequest, isReplace bool) {

@@ -41,7 +41,7 @@ func newCreateCmd() *cobra.Command {
 	return cmd
 }
 
-func createAndIndex(req index.CreateRequest) error {
+func runCreate(cmd *cobra.Command, flags *createFlags, req index.CreateRequest) error {
 	db, err := database.Open(database.WithPath(vaultPath))
 	if err != nil {
 		return fmt.Errorf("opening database: %w", err)
@@ -53,7 +53,15 @@ func createAndIndex(req index.CreateRequest) error {
 		return err
 	}
 
-	return db.Reindex(it)
+	if err := db.Reindex(it); err != nil {
+		return fmt.Errorf("indexing item: %w", err)
+	}
+
+	if flags.Quiet {
+		return nil
+	}
+
+	return writeItem(cmd.OutOrStdout(), it)
 }
 
 func addCommonCreateFlags(cmd *cobra.Command, flags *createFlags) {
@@ -76,7 +84,7 @@ func newCreateNoteCmd() *cobra.Command {
 				return err
 			}
 
-			return createAndIndex(index.CreateRequest{
+			return runCreate(cmd, flags, index.CreateRequest{
 				Type:    item.TypeNote,
 				Title:   flags.Title,
 				Body:    flags.Body,
@@ -105,7 +113,7 @@ func newCreateTaskCmd() *cobra.Command {
 				return fmt.Errorf("invalid --due: %w", err)
 			}
 
-			return createAndIndex(index.CreateRequest{
+			return runCreate(cmd, flags, index.CreateRequest{
 				Type:    item.TypeTask,
 				Title:   flags.Title,
 				Body:    flags.Body,
@@ -136,7 +144,7 @@ func newCreateReminderCmd() *cobra.Command {
 				return fmt.Errorf("invalid --remind-at: %w", err)
 			}
 
-			return createAndIndex(index.CreateRequest{
+			return runCreate(cmd, flags, index.CreateRequest{
 				Type:     item.TypeReminder,
 				Title:    flags.Title,
 				Body:     flags.Body,
