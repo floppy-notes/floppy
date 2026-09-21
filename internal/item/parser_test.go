@@ -45,52 +45,60 @@ func TestParse(t *testing.T) {
 		}
 	})
 
-	t.Run("should fail when the file lacks frontmatter ", func(t *testing.T) {
-		noDelimiterFile := "id: example\ntitle: no delimiter\n"
+	t.Run("should keep an empty body", func(t *testing.T) {
+		emptyBodyFile := "---\nid: id\ntitle: t\ntype: note\ncreated: \"2026-08-12T00:00:00-03:00\"\n---\n\n"
 
-		wantMsg := "file lacks frontmatter or is poorly formatted"
+		parsedItem, err := Parse([]byte(emptyBodyFile))
 
-		_, err := Parse([]byte(noDelimiterFile))
-		if err == nil {
-			t.Fatal("Parse() returned nil error, want an error")
+		if err != nil {
+			t.Fatalf("Parse() returned unexpected error: %v", err)
 		}
 
-		if err.Error() != wantMsg {
-			t.Errorf("Parse() error = %q, want %q", err.Error(), wantMsg)
+		if parsedItem.Body != "" {
+			t.Errorf("Parse() body = %q, want %q", parsedItem.Body, "")
 		}
 	})
+}
 
-	t.Run("should faile when the frontmatter is poorly formatted", func(t *testing.T) {
-		t.Run("with no close delimiter", func(t *testing.T) {
-			poorlyFormattedFile := strings.Replace(baseFile, "---\n\n", "", 1)
+func TestParseInvalid(t *testing.T) {
+	tests := []struct {
+		name       string
+		in         string
+		wantPrefix string
+	}{
+		{
+			"no frontmatter delimiter",
+			"id: example\ntitle: no delimiter\n",
+			"file lacks frontmatter or is poorly formatted",
+		},
+		{
+			"no close delimiter",
+			strings.Replace(baseFile, "---\n\n", "", 1),
+			"frontmatter is poorly formatted",
+		},
+		{
+			"invalid yaml",
+			"---\nid: [unterminated\n---\nbody\n",
+			"frontmatter is poorly formatted",
+		},
+		{
+			"empty file",
+			"",
+			"file lacks frontmatter or is poorly formatted",
+		},
+	}
 
-			wantMsg := "frontmatter is poorly formatted"
+	for _, tt := range tests {
+		t.Run("should fail when the file has "+tt.name, func(t *testing.T) {
+			_, err := Parse([]byte(tt.in))
 
-			_, err := Parse([]byte(poorlyFormattedFile))
 			if err == nil {
 				t.Fatal("Parse() returned nil error, want an error")
 			}
 
-			if err.Error() != wantMsg {
-				t.Errorf("Parse() error = %q, want %q", err.Error(), wantMsg)
+			if !strings.HasPrefix(err.Error(), tt.wantPrefix) {
+				t.Errorf("Parse() error = %q, want prefix %q", err.Error(), tt.wantPrefix)
 			}
 		})
-
-		t.Run("should fail when the frontmatter has invalid yaml", func(t *testing.T) {
-			invalidYamlFile := "---\nid: [unterminated\n---\nbody\n"
-
-			wantMsg := "frontmatter is poorly formatted"
-
-			_, err := Parse([]byte(invalidYamlFile))
-			if err == nil {
-				t.Fatal("Parse() returned nil error, want an error")
-			}
-
-			wantPrefix := "frontmatter is poorly formatted"
-			if !strings.HasPrefix(err.Error(), wantMsg) {
-				t.Errorf("Parse() error = %q, want prefix %q", err.Error(), wantPrefix)
-			}
-		})
-	})
-
+	}
 }

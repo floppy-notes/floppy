@@ -24,8 +24,8 @@ func (lf *ListFlags) validate() error {
 		return fmt.Errorf("invalid item type: %s", lf.Type)
 	}
 
-	if lf.Status != "" && (!item.IsValidTaskStatus(lf.Status) && !item.IsValidReminderStatus(lf.Status)) {
-		return fmt.Errorf("nonexistent status: %s", lf.Status)
+	if err := validateStatusForType(lf.Type, lf.Status); err != nil {
+		return err
 	}
 
 	if lf.Since != "" {
@@ -42,6 +42,31 @@ func (lf *ListFlags) validate() error {
 			return fmt.Errorf("invalid until date: %w", err)
 		}
 		lf.Until = t.Format(time.RFC3339)
+	}
+
+	return nil
+}
+
+func validateStatusForType(itemType string, status string) error {
+	if status == "" {
+		return nil
+	}
+
+	switch item.ItemType(itemType) {
+	case item.TypeTask:
+		if !item.IsValidTaskStatus(status) {
+			return fmt.Errorf("invalid task status: %s (should be: open, done, archived)", status)
+		}
+	case item.TypeReminder:
+		if !item.IsValidReminderStatus(status) {
+			return fmt.Errorf("invalid reminder status: %s (should be: pending, fired, dismissed)", status)
+		}
+	case item.TypeNote:
+		return fmt.Errorf("notes do not have a status")
+	default:
+		if !item.IsValidTaskStatus(status) && !item.IsValidReminderStatus(status) {
+			return fmt.Errorf("nonexistent status: %s", status)
+		}
 	}
 
 	return nil

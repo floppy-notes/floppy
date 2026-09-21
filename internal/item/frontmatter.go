@@ -44,10 +44,10 @@ func (f Frontmatter) generalValidation() error {
 		return fmt.Errorf("title can't be empty")
 	}
 	if !IsValidItemType(f.Type) {
-		return fmt.Errorf("invalid type: %q (should be: note, task or reminder)", f.Type)
+		return fmt.Errorf("invalid type: %v (should be: note, task or reminder)", f.Type)
 	}
 	if !isValidDate(time.RFC3339, f.Created) {
-		return fmt.Errorf("invalid created date format: %q (should be: %s)", f.Created, time.RFC3339)
+		return fmt.Errorf("invalid created date format: %v (should be: %s)", f.Created, time.RFC3339)
 	}
 	return nil
 }
@@ -67,10 +67,10 @@ func (f Frontmatter) noteValidation() error {
 
 func (f Frontmatter) taskValidation() error {
 	if !isValidDate(time.DateOnly, f.Due) {
-		return fmt.Errorf("invalid due date format: %q (should be: %s)", f.Due, time.DateOnly)
+		return fmt.Errorf("invalid due date format: %v (should be: %s)", f.Due, time.DateOnly)
 	}
 	if !IsValidTaskStatus(f.Status) {
-		return fmt.Errorf("invalid task status: %q (should be: open, done, archived)", f.Status)
+		return fmt.Errorf("invalid task status: %v (should be: open, done, archived)", f.Status)
 	}
 	if !isEmpty(f.RemindAt) {
 		return fmt.Errorf("task must not have a remind_at")

@@ -4,6 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/floppy-notes/floppy/actions/workflows/ci.yml"><img src="https://github.com/floppy-notes/floppy/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://codecov.io/gh/floppy-notes/floppy"><img src="https://codecov.io/gh/floppy-notes/floppy/branch/main/graph/badge.svg" alt="Coverage"></a>
   <a href="https://pkg.go.dev/github.com/floppy-notes/floppy"><img src="https://pkg.go.dev/badge/github.com/floppy-notes/floppy.svg" alt="Go Reference"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
 </p>

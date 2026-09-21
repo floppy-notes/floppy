@@ -3,6 +3,7 @@ package index
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/floppy-notes/floppy/internal/database"
@@ -117,7 +118,7 @@ func defineCommon(i *item.Item, req UpdateRequest, isReplace bool) {
 		if isReplace {
 			i.Front.Tags = req.Tags
 		} else {
-			i.Front.Tags = append(i.Front.Tags, req.Tags...)
+			i.Front.Tags = appendUnique(i.Front.Tags, req.Tags)
 		}
 	}
 
@@ -125,7 +126,16 @@ func defineCommon(i *item.Item, req UpdateRequest, isReplace bool) {
 		if isReplace {
 			i.Front.Related = req.Related
 		} else {
-			i.Front.Related = append(i.Front.Related, req.Related...)
+			i.Front.Related = appendUnique(i.Front.Related, req.Related)
 		}
 	}
+}
+
+func appendUnique(current []string, added []string) []string {
+	for _, v := range added {
+		if !slices.Contains(current, v) {
+			current = append(current, v)
+		}
+	}
+	return current
 }

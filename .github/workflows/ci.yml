@@ -34,7 +34,23 @@ jobs:
         run: go build ./...
 
       - name: test
-        run: go test ./...
+        run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: coverage threshold
+        run: |
+          go tool cover -func=coverage.out | tail -1
+          pct=$(go tool cover -func=coverage.out | tail -1 | awk '{print $3}' | tr -d '%')
+          if awk "BEGIN {exit !($pct < 90)}"; then
+            echo "coverage $pct% is below the 90% threshold"
+            exit 1
+          fi
+
+      - name: upload coverage
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage.out
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
 
       - name: smoke
         run: |
