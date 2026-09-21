@@ -212,3 +212,81 @@ func TestOpenOnAnInvalidPath(t *testing.T) {
 		}
 	})
 }
+
+// dropTable removes a table so the write helpers hit their error branches with a
+// real SQLite error, the way a corrupted index would.
+func dropTable(t *testing.T, db *Database, table string) {
+	t.Helper()
+
+	if _, err := db.Conn.Exec("DROP TABLE " + table); err != nil {
+		t.Fatalf("dropping %s returned unexpected error: %v", table, err)
+	}
+}
+
+func TestWriteErrorPropagation(t *testing.T) {
+	t.Run("Rebuild should fail when clearAll cannot run", func(t *testing.T) {
+		db := newTestDB(t)
+		dropTable(t, db, "items")
+
+		err := db.Rebuild([]item.Item{baseNote})
+
+		if err == nil {
+			t.Fatal("Rebuild() returned nil error, want an error")
+		}
+
+		if !strings.HasPrefix(err.Error(), "clearing items") {
+			t.Errorf("Rebuild() error = %q, want prefix %q", err.Error(), "clearing items")
+		}
+	})
+
+	t.Run("Reindex should fail when the item cannot be deleted", func(t *testing.T) {
+		db := newTestDB(t)
+		dropTable(t, db, "items")
+
+		err := db.Reindex(baseNote)
+
+		if err == nil {
+			t.Fatal("Reindex() returned nil error, want an error")
+		}
+
+		if !strings.Contains(err.Error(), "deleting item") {
+			t.Errorf("Reindex() error = %q, want it to contain %q", err.Error(), "deleting item")
+		}
+	})
+
+	t.Run("indexOne should fail when the items table is gone", func(t *testing.T) {
+		db := newTestDB(t)
+
+		if err := db.Rebuild(nil); err != nil {
+			t.Fatalf("Rebuild() returned unexpected error: %v", err)
+		}
+
+		dropTable(t, db, "items")
+
+		err := db.Reindex(baseNote)
+
+		if err == nil {
+			t.Fatal("Reindex() returned nil error, want an error")
+		}
+	})
+}
+
+func TestOpenPingError(t *testing.T) {
+	t.Run("should fail when the database file is a folder", func(t *testing.T) {
+		dir := t.TempDir()
+
+		if err := os.Mkdir(filepath.Join(dir, "floppy.db"), 0o755); err != nil {
+			t.Fatalf("Mkdir() returned unexpected error: %v", err)
+		}
+
+		_, err := Open(WithPath(dir))
+
+		if err == nil {
+			t.Fatal("Open() returned nil error, want an error")
+		}
+
+		if !strings.HasPrefix(err.Error(), "connection to db") {
+			t.Errorf("Open() error = %q, want prefix %q", err.Error(), "connection to db")
+		}
+	})
+}

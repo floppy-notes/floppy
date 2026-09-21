@@ -1,0 +1,16 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 90%
+        threshold: 1%
+    patch:
+      default:
+        target: 80%
+
+ignore:
+  - "cmd/floppy/main.go"
+
+comment:
+  layout: "reach, diff, files"
+  require_changes: true
