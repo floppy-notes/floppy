@@ -60,3 +60,8 @@ jobs:
           ./floppy --vault "$vault" create task --title "ci smoke" --due 2026-12-31 --quiet
           ./floppy --vault "$vault" list --type task | grep -q '"count": 1'
           ./floppy --vault "$vault" search smoke | grep -q "ci smoke"
+          id=$(./floppy --vault "$vault" list --type task | grep '"id"' | cut -d'"' -f4)
+          ./floppy --vault "$vault" show "$id" | grep -q "ci smoke"
+          ./floppy --vault "$vault" create note --title "body check" --body "hello body" --quiet
+          note=$(./floppy --vault "$vault" list --type note | grep '"id"' | cut -d'"' -f4)
+          test "$(./floppy --vault "$vault" show "$note" --body-only)" = "hello body"

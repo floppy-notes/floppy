@@ -29,6 +29,7 @@ files with YAML frontmatter.
   - [`floppy create`](#floppy-create-notetaskreminder)
   - [`floppy update`](#floppy-update-notetaskreminder)
   - [`floppy index --rebuild`](#floppy-index---rebuild)
+  - [`floppy show`](#floppy-show-id)
   - [`floppy search`](#floppy-search-terms)
   - [`floppy list`](#floppy-list)
   - [Output](#output)
@@ -65,6 +66,7 @@ floppy create note --title "Sprint retro notes" --tags team,retro \
 floppy create task --title "Fix flaky CI job" --due 2026-09-15 --tags ci
 
 floppy search flaky
+floppy show 2026-09-01-0001-tech-sync
 floppy list --type task --status open
 
 floppy update task --id <id> --status done
@@ -170,6 +172,21 @@ editing `.md` files by hand or to recover a deleted/corrupted index.
 floppy index --rebuild
 ```
 
+### `floppy show <id>`
+
+Prints a single item by its id. Unlike `list` and `search`, which read only
+the index, `show` reads the Markdown file back from the vault, so the body is
+available.
+
+| Flag | Shorthand | Default | Description |
+| --- | --- | --- | --- |
+| `--body-only` | `-b` | `false` | print the raw body instead of the JSON object |
+
+```sh
+floppy show 2026-09-01-0001-tech-sync
+floppy show 2026-09-01-0001-tech-sync --body-only
+```
+
 ### `floppy search <terms...>`
 
 Full-text search (SQLite FTS5) over item titles and bodies, ranked by
@@ -208,7 +225,8 @@ floppy list --tag golang --since 2026-09-01
 ### Output
 
 `search` and `list` print JSON on stdout. The object carries `items` and
-`count`, and holds metadata only (read `path` for the body):
+`count`, and holds metadata only (read `path` for the body, or use
+`show --body-only`):
 
 ```json
 {
@@ -227,6 +245,9 @@ floppy list --tag golang --since 2026-09-01
   "count": 1
 }
 ```
+
+`create`, `update`, and `show` print a single object with the same fields,
+not wrapped in `items`/`count`.
 
 `items` is always an array, so no results is `{"items": [], "count": 0}` with
 exit `0`. Errors go to stderr, so stdout stays parseable. Pipe it into `jq`:

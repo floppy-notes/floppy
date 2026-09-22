@@ -2,7 +2,6 @@ package index
 
 import (
 	"fmt"
-	"os"
 	"slices"
 	"strings"
 
@@ -51,19 +50,11 @@ func Update(db *database.Database, req UpdateRequest, isReplace bool) (item.Item
 		return item.Item{}, err
 	}
 
-	raw, err := os.ReadFile(row.Path)
+	it, err := loadItem(row)
 
 	if err != nil {
-		return item.Item{}, fmt.Errorf("reading item file: %w", err)
+		return item.Item{}, err
 	}
-
-	it, err := item.Parse(raw)
-
-	if err != nil {
-		return item.Item{}, fmt.Errorf("parsing item file : %w", err)
-	}
-
-	it.Path = row.Path
 
 	defineCommon(&it, req, isReplace)
 

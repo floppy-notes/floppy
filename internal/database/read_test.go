@@ -409,3 +409,56 @@ func TestList(t *testing.T) {
 		}
 	})
 }
+
+func TestFindByID(t *testing.T) {
+	t.Run("should return the row regardless of the type", func(t *testing.T) {
+		db := newTestDB(t)
+		seedAll(t, db)
+
+		for _, want := range []ItemRow{
+			{ID: baseNote.Front.ID, Type: "note"},
+			{ID: baseTask.Front.ID, Type: "task"},
+			{ID: baseReminder.Front.ID, Type: "reminder"},
+		} {
+			got, err := FindByID(db.Conn, want.ID)
+
+			if err != nil {
+				t.Fatalf("FindByID() returned unexpected error: %v", err)
+			}
+
+			if got.Type != want.Type {
+				t.Errorf("FindByID(%q) type = %q, want %q", want.ID, got.Type, want.Type)
+			}
+		}
+	})
+
+	t.Run("should return error when the id does not exist", func(t *testing.T) {
+		db := newTestDB(t)
+		seedAll(t, db)
+
+		_, err := FindByID(db.Conn, "missing")
+
+		if err == nil {
+			t.Fatal("FindByID() returned nil error, want an error")
+		}
+
+		wantMsg := "no item found with ID missing"
+		if err.Error() != wantMsg {
+			t.Errorf("FindByID() error = %q, want %q", err.Error(), wantMsg)
+		}
+	})
+
+	t.Run("should wrap the query error", func(t *testing.T) {
+		db := closedDB(t)
+
+		_, err := FindByID(db.Conn, "any")
+
+		if err == nil {
+			t.Fatal("FindByID() returned nil error, want an error")
+		}
+
+		if !strings.HasPrefix(err.Error(), "querying item") {
+			t.Errorf("FindByID() error = %q, want prefix %q", err.Error(), "querying item")
+		}
+	})
+}

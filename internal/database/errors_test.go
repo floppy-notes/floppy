@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,8 +33,12 @@ func TestReadOnClosedConnection(t *testing.T) {
 			t.Fatal("FindByIdAndType() returned nil error, want an error")
 		}
 
-		if !strings.HasPrefix(err.Error(), "Query failed") {
-			t.Errorf("FindByIdAndType() error = %q, want prefix %q", err.Error(), "Query failed")
+		if !strings.HasPrefix(err.Error(), "querying item") {
+			t.Errorf("FindByIdAndType() error = %q, want prefix %q", err.Error(), "querying item")
+		}
+
+		if errors.Unwrap(err) == nil {
+			t.Errorf("FindByIdAndType() error = %v, want it to wrap the driver error", err)
 		}
 	})
 

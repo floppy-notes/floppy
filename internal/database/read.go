@@ -7,30 +7,43 @@ import (
 	"strings"
 )
 
-func FindByIdAndType(db *sql.DB, id string, itemType string) (ItemRow, error) {
-	row := db.QueryRow(
-		`
-		SELECT items.id, items.title, items.type, items.created, items.due, items.status, items.remind_at, items.path 
+func findOne(db *sql.DB, id string, itemType string) (ItemRow, error) {
+	query := `
+		SELECT items.id, items.title, items.type, items.created, items.due, items.status, items.remind_at, items.path
 		FROM items
-		WHERE items.id = ? AND items.type = ?
-		`, id, itemType,
-	)
+		WHERE items.id = ?
+	`
 
-	if row == nil {
-		return ItemRow{}, fmt.Errorf("searching row: id %s not found", id)
+	args := []any{id}
+
+	if itemType != "" {
+		query += " AND items.type = ?"
+		args = append(args, itemType)
 	}
 
 	var result ItemRow
 
-	if err := row.Scan(&result.ID, &result.Title, &result.Type, &result.Created, &result.Due, &result.Status, &result.RemindAt, &result.Path); err != nil {
+	err := db.QueryRow(query, args...).Scan(
+		&result.ID, &result.Title, &result.Type, &result.Created,
+		&result.Due, &result.Status, &result.RemindAt, &result.Path,
+	)
+
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return ItemRow{}, fmt.Errorf("no item found with ID %s", id)
 		}
-		return ItemRow{}, fmt.Errorf("Query failed: %v", err)
-
+		return ItemRow{}, fmt.Errorf("querying item %s: %w", id, err)
 	}
 
 	return result, nil
+}
+
+func FindByID(db *sql.DB, id string) (ItemRow, error) {
+	return findOne(db, id, "")
+}
+
+func FindByIdAndType(db *sql.DB, id string, itemType string) (ItemRow, error) {
+	return findOne(db, id, itemType)
 }
 
 func Search(db *sql.DB, query string, limit int) ([]ItemRow, error) {
